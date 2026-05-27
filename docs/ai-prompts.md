@@ -24,3 +24,19 @@ Minimum, maximum, average salary of employees in a country
 Average salary for the given Job Title in a country. 
 
 Any other meaningful metrics you believe are helpful for the user persona. 
+
+----------
+
+initiate shadcn ui, components such as modal/dialog, button, input, badge, filter, list/table, toast etc
+
+----
+
+suggest  db schema architecture de iska with indexing 
+
++  discuss tradeoffs of realtime insignt calculation vs separate schema + caching, for separation of concern.
+
+Managing Employees - Add, View, update, and delete employees via UI The employee must have a full name, job title, country, salary for Salary Insights via UI - Minimum, maximum, average salary of employees in a country Average salary for the given Job Title in a country.
+
+--------
+
+Implement
