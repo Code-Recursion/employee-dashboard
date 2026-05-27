@@ -3,6 +3,9 @@
 # dependencies
 /node_modules
 /.pnp
+themeref-tdb/
+/themeref-tdb
+
 .pnp.*
 .yarn/*
 !.yarn/patches
