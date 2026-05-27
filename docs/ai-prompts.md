@@ -39,4 +39,12 @@ Managing Employees - Add, View, update, and delete employees via UI The employee
 
 --------
 
-Implement
+create a reusable navbar component with a link to navigate
+
+create sample pages :
+/dashboard
+/insignts
+use simple design.
+----
+
+consider reusability and extensibility with SOLID, create search bar component , confirm and dialog, for now consider basic requirements, later will update accordingly.
