@@ -1,5 +1,22 @@
 import { Department, EmployeeStatus } from '../constants';
 
+export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'INTERN';
+
+export interface EmployeeSeedRecord {
+  id: number;
+  full_name: string;
+  email: string;
+  gender: string;
+  createdAt: string;
+  updatedAt: string;
+  jobTitle: string;
+  country: string;
+  joiningDate: string;
+  department: string;
+  employmentType: EmploymentType;
+  salary: number;
+}
+
 export interface Employee {
   id: string;
   full_name: string;
