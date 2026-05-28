@@ -4,7 +4,7 @@ import type { UpdateEmployeePayload } from "@/models/employee.types";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
-}
+} 
 
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {

@@ -1,81 +1,115 @@
-import { Employee, CreateEmployeePayload, UpdateEmployeePayload } from '../models/employee.types';
-import { supabaseServer } from "@/lib/supabase/server";
+import { Employee, CreateEmployeePayload, UpdateEmployeePayload, EmploymentType } from '../models/employee.types';
+import { EmployeeStatus } from '../constants';
+import { prisma } from "@/lib/prisma";
 
-/**
- * Service for Employee CRUD operations.
- * Note: Replace implementation with actual DB client (e.g., Supabase) when ready.
- */
+const buildFullName = (firstName: string, lastName: string): string =>
+  `${firstName.trim()} ${lastName.trim()}`.trim();
+
+const toEmployee = (record: {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  jobTitle: string;
+  department: string;
+  employmentType: string;
+  country: string;
+  salary: number | { toString(): string };
+  joiningDate: Date;
+  status: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+}): Employee => ({
+  id: record.id,
+  firstName: record.firstName,
+  lastName: record.lastName,
+  fullName: record.fullName,
+  email: record.email,
+  jobTitle: record.jobTitle,
+  department: record.department,
+  employmentType: record.employmentType as EmploymentType,
+  country: record.country,
+  salary: Number(record.salary),
+  joiningDate: record.joiningDate,
+  status: record.status as EmployeeStatus,
+  createdAt: record.createdAt,
+  updatedAt: record.updatedAt,
+});
+
 export const EmployeeService = {
-  
   async getEmployees(): Promise<Employee[]> {
-    const { data, error } = await supabaseServer
-      .from("employees")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      throw new Error(`Failed to fetch employees: ${error.message}`);
-    }
-
-    return (data ?? []) as Employee[];
+    const employees = await prisma.employee.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return employees.map(toEmployee);
   },
 
   async getEmployeeById(id: string): Promise<Employee | null> {
-    const { data, error } = await supabaseServer
-      .from("employees")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Failed to fetch employee: ${error.message}`);
-    }
-
-    return data as Employee | null;
+    const employee = await prisma.employee.findUnique({ where: { id } });
+    if (!employee) return null;
+    return toEmployee(employee);
   },
 
   async createEmployee(payload: CreateEmployeePayload): Promise<Employee> {
-    const { data, error } = await supabaseServer
-      .from("employees")
-      .insert(payload)
-      .select("*")
-      .single();
+    const firstName = payload.firstName?.trim();
+    const lastName = payload.lastName?.trim();
 
-    if (error) {
-      throw new Error(`Failed to create employee: ${error.message}`);
+    if (!firstName || !lastName) {
+      throw new Error("firstName and lastName are required.");
     }
 
-    return data as Employee;
+    const employee = await prisma.employee.create({
+      data: {
+        firstName,
+        lastName,
+        fullName: buildFullName(firstName, lastName),
+        email: payload.email,
+        jobTitle: payload.jobTitle,
+        department: payload.department,
+        employmentType: payload.employmentType,
+        country: payload.country,
+        salary: payload.salary,
+        joiningDate: payload.joiningDate,
+        status: payload.status ?? "active",
+      },
+    });
+
+    return toEmployee(employee);
   },
 
   async updateEmployee(id: string, payload: UpdateEmployeePayload): Promise<Employee> {
-    const { data, error } = await supabaseServer
-      .from("employees")
-      .update(payload)
-      .eq("id", id)
-      .select("*")
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Failed to update employee: ${error.message}`);
-    }
-
-    if (!data) {
+    const existing = await prisma.employee.findUnique({ where: { id } });
+    if (!existing) {
       throw new Error("Employee not found");
     }
 
-    return data as Employee;
+    const firstName = payload.firstName?.trim() ?? existing.firstName;
+    const lastName = payload.lastName?.trim() ?? existing.lastName;
+
+    const employee = await prisma.employee.update({
+      where: { id },
+      data: {
+        firstName,
+        lastName,
+        fullName: buildFullName(firstName, lastName),
+        ...(payload.email !== undefined ? { email: payload.email } : {}),
+        ...(payload.jobTitle !== undefined ? { jobTitle: payload.jobTitle } : {}),
+        ...(payload.department !== undefined ? { department: payload.department } : {}),
+        ...(payload.employmentType !== undefined
+          ? { employmentType: payload.employmentType }
+          : {}),
+        ...(payload.country !== undefined ? { country: payload.country } : {}),
+        ...(payload.salary !== undefined ? { salary: payload.salary } : {}),
+        ...(payload.joiningDate !== undefined ? { joiningDate: payload.joiningDate } : {}),
+        ...(payload.status !== undefined ? { status: payload.status } : {}),
+      },
+    });
+
+    return toEmployee(employee);
   },
 
   async deleteEmployee(id: string): Promise<void> {
-    const { error } = await supabaseServer
-      .from("employees")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      throw new Error(`Failed to delete employee: ${error.message}`);
-    }
-  }
-
+    await prisma.employee.delete({ where: { id } });
+  },
 };

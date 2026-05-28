@@ -1,22 +1,9 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const { error } = await supabaseServer
-      .from("employees")
-      .select("id", { count: "exact", head: true });
-
-    if (error) {
-      return NextResponse.json(
-        {
-          ok: false,
-          message: "Database connection failed.",
-          error: error.message,
-        },
-        { status: 500 }
-      );
-    }
+    await prisma.$queryRaw`SELECT 1`;
 
     return NextResponse.json(
       {

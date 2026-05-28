@@ -52,3 +52,5 @@ consider reusability and extensibility with SOLID, create search bar component ,
 write types use the this sample employee for the BE - { "id": 1, "full_name": "Wainwright Nono", "email": "wnono0@ucsd.edu", "gender": "Male", "createdAt": "2/13/2026", "updatedAt": "7/29/2025", "jobTitle": "Desktop Support Technician", "country": "Philippines", "joiningDate": "5/15/2026", "department": "Support", "employmentType": "FULL_TIME", "salary": 74634 },
 
 on FE create parser for be response parsing and create another type for emplyee entity in types directory
+
+use form @src/components/ui/dialog.tsx createa reusable compoent for dialog to edit and create employee entries, also do zod validation on employee form.

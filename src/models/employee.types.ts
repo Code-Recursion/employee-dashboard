@@ -4,7 +4,7 @@ export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'INTERN';
 
 export interface EmployeeSeedRecord {
   id: number;
-  full_name: string;
+  fullName: string;
   email: string;
   gender: string;
   createdAt: string;
@@ -19,19 +19,34 @@ export interface EmployeeSeedRecord {
 
 export interface Employee {
   id: string;
-  full_name: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
   email: string;
-  job_title: string;
+  jobTitle: string;
   department: Department | string;
+  employmentType: EmploymentType;
   country: string;
   salary: number;
-  joining_date: string; // ISO date string or Date object depending on DB client
+  joiningDate: Date;
   status: EmployeeStatus;
-  created_at?: string;
-  updated_at?: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
-export type CreateEmployeePayload = Omit<Employee, 'id' | 'created_at' | 'updated_at'>;
+export interface CreateEmployeePayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  jobTitle: string;
+  department: Department | string;
+  employmentType: EmploymentType;
+  country: string;
+  salary: number;
+  joiningDate: string | Date;
+  status?: EmployeeStatus;
+}
+
 export type UpdateEmployeePayload = Partial<CreateEmployeePayload>;
 
 // Metrics Types
