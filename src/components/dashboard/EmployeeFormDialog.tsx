@@ -24,12 +24,26 @@ import {
   employeeFormSchema,
   type EmployeeFormValues,
 } from "@/lib/validations/employee";
-import { EMPLOYEE_STATUS } from "@/constants";
+import {
+  COUNTRIES,
+  DEPARTMENTS,
+  EMPLOYEE_STATUS,
+  EMPLOYMENT_TYPE_LABELS,
+  EMPLOYMENT_TYPES,
+  JOB_TITLES,
+} from "@/constants";
 import type { Employee } from "@/models/employee.types";
 
-const EMPLOYMENT_TYPES = ["FULL_TIME", "PART_TIME", "INTERN"] as const;
+type EmployeeFormState = {
+  [K in keyof EmployeeFormValues]: K extends
+    | "jobTitle"
+    | "department"
+    | "country"
+    ? EmployeeFormValues[K] | ""
+    : EmployeeFormValues[K];
+};
 
-const emptyForm: EmployeeFormValues = {
+const emptyForm: EmployeeFormState = {
   firstName: "",
   lastName: "",
   email: "",
@@ -42,14 +56,14 @@ const emptyForm: EmployeeFormValues = {
   status: "active",
 };
 
-const toFormValues = (employee: Employee): EmployeeFormValues => ({
+const toFormValues = (employee: Employee): EmployeeFormState => ({
   firstName: employee.firstName,
   lastName: employee.lastName,
   email: employee.email,
-  jobTitle: employee.jobTitle,
-  department: employee.department,
+  jobTitle: employee.jobTitle as unknown as EmployeeFormState["jobTitle"],
+  department: employee.department as unknown as EmployeeFormState["department"],
   employmentType: employee.employmentType,
-  country: employee.country,
+  country: employee.country as unknown as EmployeeFormState["country"],
   salary: employee.salary,
   joiningDate: new Date(employee.joiningDate).toISOString().slice(0, 10),
   status: employee.status,
@@ -70,9 +84,9 @@ export function EmployeeFormDialog({
   onOpenChange,
   onSuccess,
 }: EmployeeFormDialogProps) {
-  const [form, setForm] = useState<EmployeeFormValues>(emptyForm);
+  const [form, setForm] = useState<EmployeeFormState>(emptyForm);
   const [errors, setErrors] = useState<
-    Partial<Record<keyof EmployeeFormValues, string>>
+    Partial<Record<keyof EmployeeFormState, string>>
   >({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -82,9 +96,9 @@ export function EmployeeFormDialog({
     setForm(mode === "edit" && employee ? toFormValues(employee) : emptyForm);
   }, [open, mode, employee]);
 
-  const updateField = <K extends keyof EmployeeFormValues>(
+  const updateField = <K extends keyof EmployeeFormState>(
     key: K,
-    value: EmployeeFormValues[K],
+    value: EmployeeFormState[K],
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
@@ -95,9 +109,9 @@ export function EmployeeFormDialog({
 
     const parsed = employeeFormSchema.safeParse(form);
     if (!parsed.success) {
-      const fieldErrors: Partial<Record<keyof EmployeeFormValues, string>> = {};
+      const fieldErrors: Partial<Record<keyof EmployeeFormState, string>> = {};
       for (const issue of parsed.error.issues) {
-        const field = issue.path[0] as keyof EmployeeFormValues;
+        const field = issue.path[0] as keyof EmployeeFormState;
         if (!fieldErrors[field]) {
           fieldErrors[field] = issue.message;
         }
@@ -175,20 +189,56 @@ export function EmployeeFormDialog({
           </Field>
 
           <Field label="Job title" error={errors.jobTitle}>
-            <Input
-              value={form.jobTitle}
-              onChange={(e) => updateField("jobTitle", e.target.value)}
-              aria-invalid={!!errors.jobTitle}
-            />
+            <Select
+              value={form.jobTitle || undefined}
+              onValueChange={(value) =>
+                updateField(
+                  "jobTitle",
+                  (value ?? "") as EmployeeFormValues["jobTitle"],
+                )
+              }
+            >
+              <SelectTrigger
+                className="w-full"
+                aria-invalid={!!errors.jobTitle}
+              >
+                <SelectValue placeholder="Select job title" />
+              </SelectTrigger>
+              <SelectContent>
+                {JOB_TITLES.map((title) => (
+                  <SelectItem key={title} value={title}>
+                    {title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Department" error={errors.department}>
-              <Input
-                value={form.department}
-                onChange={(e) => updateField("department", e.target.value)}
-                aria-invalid={!!errors.department}
-              />
+              <Select
+                value={form.department || undefined}
+                onValueChange={(value) =>
+                  updateField(
+                    "department",
+                    (value ?? "") as EmployeeFormValues["department"],
+                  )
+                }
+              >
+                <SelectTrigger
+                  className="w-full"
+                  aria-invalid={!!errors.department}
+                >
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEPARTMENTS.map((dept) => (
+                    <SelectItem key={dept} value={dept}>
+                      {dept}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
 
             <Field label="Employment type" error={errors.employmentType}>
@@ -211,7 +261,7 @@ export function EmployeeFormDialog({
                 <SelectContent>
                   {EMPLOYMENT_TYPES.map((type) => (
                     <SelectItem key={type} value={type}>
-                      {type.replace("_", " ")}
+                      {EMPLOYMENT_TYPE_LABELS[type]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -221,11 +271,29 @@ export function EmployeeFormDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Country" error={errors.country}>
-              <Input
-                value={form.country}
-                onChange={(e) => updateField("country", e.target.value)}
-                aria-invalid={!!errors.country}
-              />
+              <Select
+                value={form.country || undefined}
+                onValueChange={(value) =>
+                  updateField(
+                    "country",
+                    (value ?? "") as EmployeeFormValues["country"],
+                  )
+                }
+              >
+                <SelectTrigger
+                  className="w-full"
+                  aria-invalid={!!errors.country}
+                >
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map((country) => (
+                    <SelectItem key={country} value={country}>
+                      {country}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
 
             <Field label="Salary" error={errors.salary}>
@@ -264,9 +332,9 @@ export function EmployeeFormDialog({
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.values(EMPLOYEE_STATUS).map((status) => (
+                    {EMPLOYEE_STATUS.map((status) => (
                       <SelectItem key={status} value={status}>
-                        {status}
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
                       </SelectItem>
                     ))}
                   </SelectContent>

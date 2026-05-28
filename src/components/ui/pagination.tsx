@@ -32,19 +32,27 @@ type PaginationLinkProps = React.ComponentProps<typeof Button> & {
   isActive?: boolean;
 };
 
+const paginationButtonClass =
+  "border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-100 hover:text-neutral-900 disabled:text-neutral-400";
+
 function PaginationLink({
   className,
   isActive,
   size = "icon",
-  variant = "ghost",
+  variant = "outline",
   ...props
 }: PaginationLinkProps) {
   return (
     <Button
       aria-current={isActive ? "page" : undefined}
-      variant={isActive ? "secondary" : variant}
+      variant={variant}
       size={size}
-      className={cn("min-w-8", className)}
+      className={cn(
+        "min-w-8",
+        paginationButtonClass,
+        isActive && "border-neutral-400 bg-neutral-100 font-semibold",
+        className,
+      )}
       {...props}
     />
   );
@@ -58,10 +66,10 @@ function PaginationPrevious({
     <Button
       variant="outline"
       size="sm"
-      className={cn("gap-1 px-2.5", className)}
+      className={cn("gap-1 px-2.5", paginationButtonClass, className)}
       {...props}
     >
-      <ChevronLeftIcon className="size-4" />
+      <ChevronLeftIcon className="size-4 text-neutral-700" />
       <span>Previous</span>
     </Button>
   );
@@ -75,11 +83,11 @@ function PaginationNext({
     <Button
       variant="outline"
       size="sm"
-      className={cn("gap-1 px-2.5", className)}
+      className={cn("gap-1 px-2.5", paginationButtonClass, className)}
       {...props}
     >
       <span>Next</span>
-      <ChevronRightIcon className="size-4" />
+      <ChevronRightIcon className="size-4 text-neutral-700" />
     </Button>
   );
 }

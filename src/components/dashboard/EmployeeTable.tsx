@@ -27,7 +27,14 @@ import {
 import { EmployeeApi, EmployeeApiError } from "@/lib/api/employees";
 import { EmployeeFormDialog } from "@/components/dashboard/EmployeeFormDialog";
 import { EmployeePagination } from "@/components/dashboard/EmployeePagination";
-import { EMPLOYEE_STATUS } from "@/constants";
+import {
+  COUNTRIES,
+  DEPARTMENTS,
+  EMPLOYEE_STATUS,
+  EMPLOYMENT_TYPE_LABELS,
+  EMPLOYMENT_TYPES,
+  JOB_TITLES,
+} from "@/constants";
 import type {
   Employee,
   EmployeeListQuery,
@@ -58,6 +65,8 @@ const emptyFilters: EmployeeFilters = {
 
 const filterInputClass =
   "h-8 text-sm bg-white text-neutral-900 placeholder:text-neutral-500";
+
+const filterSelectClass = `rounded-lg border border-input px-2 w-full ${filterInputClass}`;
 
 const PAGE_SIZE = 20;
 
@@ -240,48 +249,40 @@ export function EmployeeTable() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            <Input
-              placeholder="Country"
-              className={filterInputClass}
+            <FilterSelect
               value={filters.country}
-              onChange={(e) => updateFilter("country", e.target.value)}
+              onChange={(value) => updateFilter("country", value)}
+              placeholder="All countries"
+              options={COUNTRIES}
             />
-            <Input
-              placeholder="Job title"
-              className={filterInputClass}
+            <FilterSelect
               value={filters.jobTitle}
-              onChange={(e) => updateFilter("jobTitle", e.target.value)}
+              onChange={(value) => updateFilter("jobTitle", value)}
+              placeholder="All job titles"
+              options={JOB_TITLES}
             />
-            <Input
-              placeholder="Department"
-              className={filterInputClass}
+            <FilterSelect
               value={filters.department}
-              onChange={(e) => updateFilter("department", e.target.value)}
+              onChange={(value) => updateFilter("department", value)}
+              placeholder="All departments"
+              options={DEPARTMENTS}
+            />
+            <FilterSelect
+              value={filters.employmentType}
+              onChange={(value) => updateFilter("employmentType", value)}
+              placeholder="All types"
+              options={EMPLOYMENT_TYPES}
+              getLabel={(value) => EMPLOYMENT_TYPE_LABELS[value as keyof typeof EMPLOYMENT_TYPE_LABELS] ?? value}
+            />
+            <FilterSelect
+              value={filters.status}
+              onChange={(value) => updateFilter("status", value)}
+              placeholder="All status"
+              options={EMPLOYEE_STATUS}
+              getLabel={(value) => value.charAt(0).toUpperCase() + value.slice(1)}
             />
             <select
-              className={`rounded-lg border border-input px-2 ${filterInputClass}`}
-              value={filters.employmentType}
-              onChange={(e) => updateFilter("employmentType", e.target.value)}
-            >
-              <option value="">All types</option>
-              <option value="FULL_TIME">Full time</option>
-              <option value="PART_TIME">Part time</option>
-              <option value="INTERN">Intern</option>
-            </select>
-            <select
-              className={`rounded-lg border border-input px-2 ${filterInputClass}`}
-              value={filters.status}
-              onChange={(e) => updateFilter("status", e.target.value)}
-            >
-              <option value="">All status</option>
-              {Object.values(EMPLOYEE_STATUS).map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-            <select
-              className={`rounded-lg border border-input px-2 ${filterInputClass}`}
+              className={filterSelectClass}
               value={`${filters.sortBy}-${filters.sortOrder}`}
               onChange={(e) => {
                 const [sortBy, sortOrder] = e.target.value.split("-");
@@ -434,5 +435,34 @@ export function EmployeeTable() {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+function FilterSelect<T extends string>({
+  value,
+  onChange,
+  placeholder,
+  options,
+  getLabel,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  options: readonly T[];
+  getLabel?: (value: T) => string;
+}) {
+  return (
+    <select
+      className={filterSelectClass}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {getLabel ? getLabel(option) : option}
+        </option>
+      ))}
+    </select>
   );
 }

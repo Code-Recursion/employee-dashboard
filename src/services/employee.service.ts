@@ -70,15 +70,9 @@ export const EmployeeService = {
     const searchTerm = query.search?.trim();
 
     const where = {
-      ...(query.country
-        ? { country: { contains: query.country, mode: "insensitive" as const } }
-        : {}),
-      ...(query.jobTitle
-        ? { jobTitle: { contains: query.jobTitle, mode: "insensitive" as const } }
-        : {}),
-      ...(query.department
-        ? { department: { contains: query.department, mode: "insensitive" as const } }
-        : {}),
+      ...(query.country ? { country: query.country } : {}),
+      ...(query.jobTitle ? { jobTitle: query.jobTitle } : {}),
+      ...(query.department ? { department: query.department } : {}),
       ...(query.employmentType ? { employmentType: query.employmentType } : {}),
       ...(query.status ? { status: query.status } : {}),
       ...(searchTerm

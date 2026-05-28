@@ -1,6 +1,10 @@
-import { Department, EmployeeStatus } from '../constants';
+import {
+  Department,
+  EmployeeStatus,
+  EmploymentType,
+} from '../constants';
 
-export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'INTERN';
+export type { EmploymentType };
 
 export interface EmployeeSeedRecord {
   id: number;
