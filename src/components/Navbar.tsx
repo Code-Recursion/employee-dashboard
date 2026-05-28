@@ -8,20 +8,24 @@ export function Navbar() {
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center gap-2">
-              <span className="font-bold text-xl text-neutral-900 tracking-tight">SalaryMgmt</span>
+              <span className="font-bold text-xl text-neutral-900 tracking-tight">
+                SalaryMgmt
+              </span>
             </Link>
             <div className="hidden md:ml-10 md:flex md:space-x-8">
-              <Link href="/dashboard" className="text-neutral-600 hover:text-neutral-900 px-3 py-2 text-sm font-medium transition-colors">
+              <Link
+                href="/dashboard"
+                className="text-neutral-600 hover:text-neutral-900 px-3 py-2 text-sm font-medium transition-colors"
+              >
                 Dashboard
               </Link>
-              <Link href="/insights" className="text-neutral-600 hover:text-neutral-900 px-3 py-2 text-sm font-medium transition-colors">
+              <Link
+                href="/insights"
+                className="text-neutral-600 hover:text-neutral-900 px-3 py-2 text-sm font-medium transition-colors"
+              >
                 Insights
               </Link>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm">Sign In</Button>
-            <Button size="sm">Get Started</Button>
           </div>
         </div>
       </div>

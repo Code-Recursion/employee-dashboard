@@ -7,7 +7,7 @@ export default function InsightsPage() {
         <h1 className="text-3xl font-bold tracking-tight text-neutral-100">
           Insights & Analytics
         </h1>
-        <p className="text-neutral-500 mt-1">
+        <p className="text-neutral-300 mt-1">
           Overview of company metrics and performance.
         </p>
       </div>

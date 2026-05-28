@@ -5,6 +5,13 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -66,13 +73,46 @@ const emptyFilters: EmployeeFilters = {
 const filterInputClass =
   "h-8 text-sm bg-white text-neutral-900 placeholder:text-neutral-500";
 
-const filterSelectClass = `rounded-lg border border-input px-2 w-full ${filterInputClass}`;
+const filterTriggerClass = `w-full ${filterInputClass} border-neutral-200`;
+
+const SORT_OPTIONS = [
+  {
+    value: "Recently added",
+    sortBy: "createdAt",
+    sortOrder: "desc",
+  },
+  {
+    value: "Oldest first",
+    sortBy: "createdAt",
+    sortOrder: "asc",
+  },
+  {
+    value: "Salary (high to low)",
+    sortBy: "salary",
+    sortOrder: "desc",
+  },
+  {
+    value: "Salary (low to high)",
+    sortBy: "salary",
+    sortOrder: "asc",
+  },
+  {
+    value: "Name A–Z",
+    sortBy: "fullName",
+    sortOrder: "asc",
+  },
+] as const;
+
+const getSortOptionValue = (sortBy: string, sortOrder: string) =>
+  SORT_OPTIONS.find(
+    (option) => option.sortBy === sortBy && option.sortOrder === sortOrder,
+  )?.value ?? SORT_OPTIONS[0].value;
 
 const PAGE_SIZE = 20;
 
 const toListQuery = (
   filters: EmployeeFilters,
-  page: number
+  page: number,
 ): EmployeeListQuery => ({
   page,
   limit: PAGE_SIZE,
@@ -81,7 +121,8 @@ const toListQuery = (
   jobTitle: filters.jobTitle.trim() || undefined,
   department: filters.department.trim() || undefined,
   employmentType:
-    (filters.employmentType as EmployeeListQuery["employmentType"]) || undefined,
+    (filters.employmentType as EmployeeListQuery["employmentType"]) ||
+    undefined,
   status: (filters.status as EmployeeListQuery["status"]) || undefined,
   sortBy: filters.sortBy || undefined,
   sortOrder: filters.sortOrder,
@@ -114,28 +155,30 @@ export function EmployeeTable() {
 
   const fetchEmployees = useCallback(
     async (queryFilters: EmployeeFilters, pageNumber: number) => {
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
 
-    try {
-      const result = await EmployeeApi.list(toListQuery(queryFilters, pageNumber));
+      try {
+        const result = await EmployeeApi.list(
+          toListQuery(queryFilters, pageNumber),
+        );
 
-      setEmployees(result.data);
-      setPagination(result.pagination);
-    } catch (err) {
-      const message =
-        err instanceof EmployeeApiError
-          ? err.message
-          : "Failed to load employees.";
-      setError(message);
-      setEmployees([]);
-      setPagination(null);
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  },
-    []
+        setEmployees(result.data);
+        setPagination(result.pagination);
+      } catch (err) {
+        const message =
+          err instanceof EmployeeApiError
+            ? err.message
+            : "Failed to load employees.";
+        setError(message);
+        setEmployees([]);
+        setPagination(null);
+        toast.error(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
   );
 
   useEffect(() => {
@@ -160,7 +203,7 @@ export function EmployeeTable() {
 
   const updateFilter = <K extends keyof EmployeeFilters>(
     key: K,
-    value: EmployeeFilters[K]
+    value: EmployeeFilters[K],
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -210,7 +253,7 @@ export function EmployeeTable() {
           <h1 className="text-3xl font-bold tracking-tight text-neutral-300">
             Dashboard
           </h1>
-          <p className="text-neutral-500 mt-1">
+          <p className="text-neutral-300 mt-1">
             Manage and view employee salary information.
           </p>
         </div>
@@ -239,7 +282,7 @@ export function EmployeeTable() {
                 Apply
               </Button>
               <Button
-                variant="outline"
+                className="bg-orange-200"
                 onClick={handleClearFilters}
                 disabled={loading}
               >
@@ -248,6 +291,7 @@ export function EmployeeTable() {
             </div>
           </div>
 
+          <label className="text-zinc-800">Fitlers </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             <FilterSelect
               value={filters.country}
@@ -272,30 +316,41 @@ export function EmployeeTable() {
               onChange={(value) => updateFilter("employmentType", value)}
               placeholder="All types"
               options={EMPLOYMENT_TYPES}
-              getLabel={(value) => EMPLOYMENT_TYPE_LABELS[value as keyof typeof EMPLOYMENT_TYPE_LABELS] ?? value}
+              getLabel={(value) =>
+                EMPLOYMENT_TYPE_LABELS[
+                  value as keyof typeof EMPLOYMENT_TYPE_LABELS
+                ] ?? value
+              }
             />
             <FilterSelect
               value={filters.status}
               onChange={(value) => updateFilter("status", value)}
               placeholder="All status"
               options={EMPLOYEE_STATUS}
-              getLabel={(value) => value.charAt(0).toUpperCase() + value.slice(1)}
+              getLabel={(value) =>
+                value.charAt(0).toUpperCase() + value.slice(1)
+              }
             />
-            <select
-              className={filterSelectClass}
-              value={`${filters.sortBy}-${filters.sortOrder}`}
-              onChange={(e) => {
-                const [sortBy, sortOrder] = e.target.value.split("-");
-                updateFilter("sortBy", sortBy);
-                updateFilter("sortOrder", sortOrder as "asc" | "desc");
+            <Select
+              value={getSortOptionValue(filters.sortBy, filters.sortOrder)}
+              onValueChange={(next) => {
+                const option = SORT_OPTIONS.find((item) => item.value === next);
+                if (!option) return;
+                updateFilter("sortBy", option.sortBy);
+                updateFilter("sortOrder", option.sortOrder);
               }}
             >
-              <option value="createdAt-desc">Newest</option>
-              <option value="createdAt-asc">Oldest</option>
-              <option value="salary-desc">Salary ↓</option>
-              <option value="salary-asc">Salary ↑</option>
-              <option value="fullName-asc">Name A–Z</option>
-            </select>
+              <SelectTrigger size="sm" className={filterTriggerClass}>
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -304,7 +359,7 @@ export function EmployeeTable() {
         <div className="rounded-md border border-neutral-200">
           <Table>
             <TableHeader className="bg-black">
-              <TableRow>
+              <TableRow className="hover:bg-black">
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Job Title</TableHead>
@@ -452,17 +507,23 @@ function FilterSelect<T extends string>({
   getLabel?: (value: T) => string;
 }) {
   return (
-    <select
-      className={filterSelectClass}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
+    <Select
+      value={value || placeholder}
+      onValueChange={(next) =>
+        onChange(next === placeholder ? "" : (next ?? ""))
+      }
     >
-      <option value="">{placeholder}</option>
-      {options.map((option) => (
-        <option key={option} value={option}>
-          {getLabel ? getLabel(option) : option}
-        </option>
-      ))}
-    </select>
+      <SelectTrigger size="sm" className={filterTriggerClass}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={placeholder}>{placeholder}</SelectItem>
+        {options.map((option) => (
+          <SelectItem key={option} value={option}>
+            {getLabel ? getLabel(option) : option}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
