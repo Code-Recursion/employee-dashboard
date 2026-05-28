@@ -7,14 +7,18 @@ type SearchProps = {
   placeholder?: string;
 };
 
-export const Search = ({ searchText, setSearchText, placeholder = "Search..." }: SearchProps) => {
+export const Search = ({
+  searchText,
+  setSearchText,
+  placeholder = "Search...",
+}: SearchProps) => {
   return (
     <div className="relative">
       <Input
         placeholder={placeholder}
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
-        className="pr-[24px]"
+        className="pr-[24px"
       />
       {searchText && (
         <span
