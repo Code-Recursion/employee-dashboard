@@ -18,7 +18,7 @@ export const Search = ({
         placeholder={placeholder}
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
-        className="pr-[24px"
+        className="pr-[24px] text-base bg-white text-neutral-900 placeholder:text-neutral-500"
       />
       {searchText && (
         <span

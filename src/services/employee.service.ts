@@ -67,15 +67,26 @@ export const EmployeeService = {
     const limit = Math.min(MAX_LIMIT, Math.max(1, query.limit ?? DEFAULT_LIMIT));
     const skip = (page - 1) * limit;
 
+    const searchTerm = query.search?.trim();
+
     const where = {
-      ...(query.country ? { country: query.country } : {}),
-      ...(query.jobTitle ? { jobTitle: query.jobTitle } : {}),
-      ...(query.search
+      ...(query.country
+        ? { country: { contains: query.country, mode: "insensitive" as const } }
+        : {}),
+      ...(query.jobTitle
+        ? { jobTitle: { contains: query.jobTitle, mode: "insensitive" as const } }
+        : {}),
+      ...(query.department
+        ? { department: { contains: query.department, mode: "insensitive" as const } }
+        : {}),
+      ...(query.employmentType ? { employmentType: query.employmentType } : {}),
+      ...(query.status ? { status: query.status } : {}),
+      ...(searchTerm
         ? {
-            fullName: {
-              contains: query.search.trim(),
-              mode: "insensitive",
-            },
+            OR: [
+              { fullName: { contains: searchTerm, mode: "insensitive" as const } },
+              { email: { contains: searchTerm, mode: "insensitive" as const } },
+            ],
           }
         : {}),
     };

@@ -55,6 +55,9 @@ export interface EmployeeListQuery {
   search?: string;
   country?: string;
   jobTitle?: string;
+  department?: string;
+  employmentType?: EmploymentType;
+  status?: EmployeeStatus;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }

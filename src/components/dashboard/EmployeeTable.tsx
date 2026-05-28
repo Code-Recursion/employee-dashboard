@@ -26,7 +26,57 @@ import {
 } from "@/components/ui/alert-dialog";
 import { EmployeeApi, EmployeeApiError } from "@/lib/api/employees";
 import { EmployeeFormDialog } from "@/components/dashboard/EmployeeFormDialog";
-import type { Employee, PaginationMeta } from "@/models/employee.types";
+import { EmployeePagination } from "@/components/dashboard/EmployeePagination";
+import { EMPLOYEE_STATUS } from "@/constants";
+import type {
+  Employee,
+  EmployeeListQuery,
+  PaginationMeta,
+} from "@/models/employee.types";
+
+type EmployeeFilters = {
+  search: string;
+  country: string;
+  jobTitle: string;
+  department: string;
+  employmentType: string;
+  status: string;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
+};
+
+const emptyFilters: EmployeeFilters = {
+  search: "",
+  country: "",
+  jobTitle: "",
+  department: "",
+  employmentType: "",
+  status: "",
+  sortBy: "createdAt",
+  sortOrder: "desc",
+};
+
+const filterInputClass =
+  "h-8 text-sm bg-white text-neutral-900 placeholder:text-neutral-500";
+
+const PAGE_SIZE = 20;
+
+const toListQuery = (
+  filters: EmployeeFilters,
+  page: number
+): EmployeeListQuery => ({
+  page,
+  limit: PAGE_SIZE,
+  search: filters.search.trim() || undefined,
+  country: filters.country.trim() || undefined,
+  jobTitle: filters.jobTitle.trim() || undefined,
+  department: filters.department.trim() || undefined,
+  employmentType:
+    (filters.employmentType as EmployeeListQuery["employmentType"]) || undefined,
+  status: (filters.status as EmployeeListQuery["status"]) || undefined,
+  sortBy: filters.sortBy || undefined,
+  sortOrder: filters.sortOrder,
+});
 
 const formatDate = (value: string | Date | null | undefined) => {
   if (!value) return "—";
@@ -36,30 +86,30 @@ const formatDate = (value: string | Date | null | undefined) => {
 export function EmployeeTable() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<EmployeeFilters>(emptyFilters);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null,
+  );
 
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState(false);
 
-  const fetchEmployees = useCallback(async (searchTerm?: string) => {
+  const fetchEmployees = useCallback(
+    async (queryFilters: EmployeeFilters, pageNumber: number) => {
     setLoading(true);
     setError(null);
 
     try {
-      const result = await EmployeeApi.list({
-        page: 1,
-        limit: 20,
-        search: searchTerm?.trim() || undefined,
-        sortBy: "createdAt",
-        sortOrder: "desc",
-      });
+      const result = await EmployeeApi.list(toListQuery(queryFilters, pageNumber));
 
       setEmployees(result.data);
       setPagination(result.pagination);
@@ -75,14 +125,35 @@ export function EmployeeTable() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  },
+    []
+  );
 
   useEffect(() => {
-    fetchEmployees();
+    fetchEmployees(emptyFilters, 1);
   }, [fetchEmployees]);
 
-  const handleSearch = () => {
-    fetchEmployees(search);
+  const handleApplyFilters = () => {
+    setPage(1);
+    fetchEmployees(filters, 1);
+  };
+
+  const handleClearFilters = () => {
+    setFilters(emptyFilters);
+    setPage(1);
+    fetchEmployees(emptyFilters, 1);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage);
+    fetchEmployees(filters, nextPage);
+  };
+
+  const updateFilter = <K extends keyof EmployeeFilters>(
+    key: K,
+    value: EmployeeFilters[K]
+  ) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const openCreate = () => {
@@ -111,10 +182,12 @@ export function EmployeeTable() {
       toast.success(`${employeeToDelete.fullName} deleted successfully.`);
       setDeleteOpen(false);
       setEmployeeToDelete(null);
-      fetchEmployees(search);
+      fetchEmployees(filters, page);
     } catch (err) {
       const message =
-        err instanceof EmployeeApiError ? err.message : "Failed to delete employee.";
+        err instanceof EmployeeApiError
+          ? err.message
+          : "Failed to delete employee.";
       toast.error(message);
     } finally {
       setDeleting(false);
@@ -136,37 +209,96 @@ export function EmployeeTable() {
       </div>
 
       <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-6 mb-8">
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
-            <Input
-              placeholder="Search employees by name..."
-              className="pl-9 w-full"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
+        <div className="space-y-3 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+              <Input
+                placeholder="Search by name or email..."
+                className={`pl-9 w-full ${filterInputClass}`}
+                value={filters.search}
+                onChange={(e) => updateFilter("search", e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
+              />
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button
+                variant="secondary"
+                onClick={handleApplyFilters}
+                disabled={loading}
+              >
+                Apply
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleClearFilters}
+                disabled={loading}
+              >
+                Clear
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="secondary"
-            className="shrink-0"
-            onClick={handleSearch}
-            disabled={loading}
-          >
-            Search
-          </Button>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <Input
+              placeholder="Country"
+              className={filterInputClass}
+              value={filters.country}
+              onChange={(e) => updateFilter("country", e.target.value)}
+            />
+            <Input
+              placeholder="Job title"
+              className={filterInputClass}
+              value={filters.jobTitle}
+              onChange={(e) => updateFilter("jobTitle", e.target.value)}
+            />
+            <Input
+              placeholder="Department"
+              className={filterInputClass}
+              value={filters.department}
+              onChange={(e) => updateFilter("department", e.target.value)}
+            />
+            <select
+              className={`rounded-lg border border-input px-2 ${filterInputClass}`}
+              value={filters.employmentType}
+              onChange={(e) => updateFilter("employmentType", e.target.value)}
+            >
+              <option value="">All types</option>
+              <option value="FULL_TIME">Full time</option>
+              <option value="PART_TIME">Part time</option>
+              <option value="INTERN">Intern</option>
+            </select>
+            <select
+              className={`rounded-lg border border-input px-2 ${filterInputClass}`}
+              value={filters.status}
+              onChange={(e) => updateFilter("status", e.target.value)}
+            >
+              <option value="">All status</option>
+              {Object.values(EMPLOYEE_STATUS).map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+            <select
+              className={`rounded-lg border border-input px-2 ${filterInputClass}`}
+              value={`${filters.sortBy}-${filters.sortOrder}`}
+              onChange={(e) => {
+                const [sortBy, sortOrder] = e.target.value.split("-");
+                updateFilter("sortBy", sortBy);
+                updateFilter("sortOrder", sortOrder as "asc" | "desc");
+              }}
+            >
+              <option value="createdAt-desc">Newest</option>
+              <option value="createdAt-asc">Oldest</option>
+              <option value="salary-desc">Salary ↓</option>
+              <option value="salary-asc">Salary ↑</option>
+              <option value="fullName-asc">Name A–Z</option>
+            </select>
+          </div>
         </div>
 
-        {error && (
-          <p className="text-sm text-red-600 mb-4">{error}</p>
-        )}
-
-        {pagination && !error && (
-          <p className="text-sm text-neutral-500 mb-4">
-            Showing {employees.length} of {pagination.total} employees
-            (page {pagination.page} of {pagination.totalPages || 1})
-          </p>
-        )}
+        {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
         <div className="rounded-md border border-neutral-200">
           <Table>
@@ -187,13 +319,19 @@ export function EmployeeTable() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-neutral-500 py-8">
+                  <TableCell
+                    colSpan={10}
+                    className="text-center text-neutral-500 py-8"
+                  >
                     Loading employees...
                   </TableCell>
                 </TableRow>
               ) : employees.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-neutral-500 py-8">
+                  <TableCell
+                    colSpan={10}
+                    className="text-center text-neutral-500 py-8"
+                  >
                     No employees found.
                   </TableCell>
                 </TableRow>
@@ -216,7 +354,9 @@ export function EmployeeTable() {
                       {employee.department}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{employee.employmentType}</Badge>
+                      <Badge variant="secondary">
+                        {employee.employmentType}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-neutral-600 capitalize">
                       {employee.status}
@@ -230,7 +370,7 @@ export function EmployeeTable() {
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           onClick={() => openEdit(employee)}
                         >
@@ -238,7 +378,7 @@ export function EmployeeTable() {
                           Edit
                         </Button>
                         <Button
-                          variant="outline"
+                          variant="destructive"
                           size="sm"
                           onClick={() => openDelete(employee)}
                         >
@@ -253,6 +393,14 @@ export function EmployeeTable() {
             </TableBody>
           </Table>
         </div>
+
+        {pagination && !error && (
+          <EmployeePagination
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            disabled={loading}
+          />
+        )}
       </div>
 
       <EmployeeFormDialog
@@ -260,7 +408,7 @@ export function EmployeeTable() {
         employee={selectedEmployee}
         open={formOpen}
         onOpenChange={setFormOpen}
-        onSuccess={() => fetchEmployees(search)}
+        onSuccess={() => fetchEmployees(filters, page)}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -269,8 +417,8 @@ export function EmployeeTable() {
             <AlertDialogTitle>Delete employee?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove{" "}
-              <strong>{employeeToDelete?.fullName}</strong> from the system. This
-              action cannot be undone.
+              <strong>{employeeToDelete?.fullName}</strong> from the system.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

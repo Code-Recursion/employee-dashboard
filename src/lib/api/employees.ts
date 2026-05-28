@@ -30,6 +30,9 @@ const buildQueryString = (query: EmployeeListQuery = {}): string => {
   if (query.search) params.set("search", query.search);
   if (query.country) params.set("country", query.country);
   if (query.jobTitle) params.set("jobTitle", query.jobTitle);
+  if (query.department) params.set("department", query.department);
+  if (query.employmentType) params.set("employmentType", query.employmentType);
+  if (query.status) params.set("status", query.status);
   if (query.sortBy) params.set("sortBy", query.sortBy);
   if (query.sortOrder) params.set("sortOrder", query.sortOrder);
 

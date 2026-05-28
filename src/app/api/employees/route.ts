@@ -13,6 +13,9 @@ const parseListQuery = (searchParams: URLSearchParams): EmployeeListQuery => {
     search: searchParams.get("search") ?? undefined,
     country: searchParams.get("country") ?? undefined,
     jobTitle: searchParams.get("jobTitle") ?? undefined,
+    department: searchParams.get("department") ?? undefined,
+    employmentType: (searchParams.get("employmentType") as EmployeeListQuery["employmentType"]) ?? undefined,
+    status: (searchParams.get("status") as EmployeeListQuery["status"]) ?? undefined,
     sortBy: searchParams.get("sortBy") ?? undefined,
     sortOrder: sortOrder === "asc" || sortOrder === "desc" ? sortOrder : undefined,
   };
