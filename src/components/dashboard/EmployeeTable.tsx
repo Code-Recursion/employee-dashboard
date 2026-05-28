@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -136,7 +136,8 @@ const formatDate = (value: string | Date | null | undefined) => {
 export function EmployeeTable() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [filters, setFilters] = useState<EmployeeFilters>(emptyFilters);
+  const [appliedFilters, setAppliedFilters] =
+    useState<EmployeeFilters>(emptyFilters);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -185,45 +186,45 @@ export function EmployeeTable() {
     fetchEmployees(emptyFilters, 1);
   }, [fetchEmployees]);
 
-  const handleApplyFilters = () => {
-    setPage(1);
-    fetchEmployees(filters, 1);
-  };
+  const handleApplyFilters = useCallback(
+    (nextFilters: EmployeeFilters) => {
+      setAppliedFilters(nextFilters);
+      setPage(1);
+      fetchEmployees(nextFilters, 1);
+    },
+    [fetchEmployees],
+  );
 
-  const handleClearFilters = () => {
-    setFilters(emptyFilters);
+  const handleClearFilters = useCallback(() => {
+    setAppliedFilters(emptyFilters);
     setPage(1);
     fetchEmployees(emptyFilters, 1);
-  };
+  }, [fetchEmployees]);
 
-  const handlePageChange = (nextPage: number) => {
-    setPage(nextPage);
-    fetchEmployees(filters, nextPage);
-  };
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      setPage(nextPage);
+      fetchEmployees(appliedFilters, nextPage);
+    },
+    [appliedFilters, fetchEmployees],
+  );
 
-  const updateFilter = <K extends keyof EmployeeFilters>(
-    key: K,
-    value: EmployeeFilters[K],
-  ) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const openCreate = () => {
+  const openCreate = useCallback(() => {
     setFormMode("create");
     setSelectedEmployee(null);
     setFormOpen(true);
-  };
+  }, []);
 
-  const openEdit = (employee: Employee) => {
+  const openEdit = useCallback((employee: Employee) => {
     setFormMode("edit");
     setSelectedEmployee(employee);
     setFormOpen(true);
-  };
+  }, []);
 
-  const openDelete = (employee: Employee) => {
+  const openDelete = useCallback((employee: Employee) => {
     setEmployeeToDelete(employee);
     setDeleteOpen(true);
-  };
+  }, []);
 
   const handleDelete = async () => {
     if (!employeeToDelete) return;
@@ -234,7 +235,7 @@ export function EmployeeTable() {
       toast.success(`${employeeToDelete.fullName} deleted successfully.`);
       setDeleteOpen(false);
       setEmployeeToDelete(null);
-      fetchEmployees(filters, page);
+      fetchEmployees(appliedFilters, page);
     } catch (err) {
       const message =
         err instanceof EmployeeApiError
@@ -261,194 +262,20 @@ export function EmployeeTable() {
       </div>
 
       <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-6 mb-8">
-        <div className="space-y-3 mb-6">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
-              <Input
-                placeholder="Search by name or email..."
-                className={`pl-9 w-full ${filterInputClass}`}
-                value={filters.search}
-                onChange={(e) => updateFilter("search", e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleApplyFilters()}
-              />
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <Button
-                variant="secondary"
-                onClick={handleApplyFilters}
-                disabled={loading}
-              >
-                Apply
-              </Button>
-              <Button
-                className="bg-orange-200"
-                onClick={handleClearFilters}
-                disabled={loading}
-              >
-                Clear
-              </Button>
-            </div>
-          </div>
-
-          <label className="text-zinc-800">Fitlers </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            <FilterSelect
-              value={filters.country}
-              onChange={(value) => updateFilter("country", value)}
-              placeholder="All countries"
-              options={COUNTRIES}
-            />
-            <FilterSelect
-              value={filters.jobTitle}
-              onChange={(value) => updateFilter("jobTitle", value)}
-              placeholder="All job titles"
-              options={JOB_TITLES}
-            />
-            <FilterSelect
-              value={filters.department}
-              onChange={(value) => updateFilter("department", value)}
-              placeholder="All departments"
-              options={DEPARTMENTS}
-            />
-            <FilterSelect
-              value={filters.employmentType}
-              onChange={(value) => updateFilter("employmentType", value)}
-              placeholder="All types"
-              options={EMPLOYMENT_TYPES}
-              getLabel={(value) =>
-                EMPLOYMENT_TYPE_LABELS[
-                  value as keyof typeof EMPLOYMENT_TYPE_LABELS
-                ] ?? value
-              }
-            />
-            <FilterSelect
-              value={filters.status}
-              onChange={(value) => updateFilter("status", value)}
-              placeholder="All status"
-              options={EMPLOYEE_STATUS}
-              getLabel={(value) =>
-                value.charAt(0).toUpperCase() + value.slice(1)
-              }
-            />
-            <Select
-              value={getSortOptionValue(filters.sortBy, filters.sortOrder)}
-              onValueChange={(next) => {
-                const option = SORT_OPTIONS.find((item) => item.value === next);
-                if (!option) return;
-                updateFilter("sortBy", option.sortBy);
-                updateFilter("sortOrder", option.sortOrder);
-              }}
-            >
-              <SelectTrigger size="sm" className={filterTriggerClass}>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.value}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <EmployeeFiltersPanel
+          loading={loading}
+          onApply={handleApplyFilters}
+          onClear={handleClearFilters}
+        />
 
         {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
 
-        <div className="rounded-md border border-neutral-200">
-          <Table>
-            <TableHeader className="bg-black">
-              <TableRow className="hover:bg-black">
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Job Title</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Joining Date</TableHead>
-                <TableHead>Salary</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={10}
-                    className="text-center text-neutral-500 py-8"
-                  >
-                    Loading employees...
-                  </TableCell>
-                </TableRow>
-              ) : employees.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={10}
-                    className="text-center text-neutral-500 py-8"
-                  >
-                    No employees found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                employees.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell className="font-medium text-neutral-900">
-                      {employee.fullName}
-                    </TableCell>
-                    <TableCell className="text-neutral-600">
-                      {employee.email}
-                    </TableCell>
-                    <TableCell className="text-neutral-600">
-                      {employee.jobTitle}
-                    </TableCell>
-                    <TableCell className="text-neutral-600">
-                      {employee.country}
-                    </TableCell>
-                    <TableCell className="text-neutral-600">
-                      {employee.department}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {employee.employmentType}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-neutral-600 capitalize">
-                      {employee.status}
-                    </TableCell>
-                    <TableCell className="text-neutral-600">
-                      {formatDate(employee.joiningDate)}
-                    </TableCell>
-                    <TableCell className="text-neutral-600">
-                      {employee.salary.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => openEdit(employee)}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => openDelete(employee)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <EmployeeDataTable
+          employees={employees}
+          loading={loading}
+          onEdit={openEdit}
+          onDelete={openDelete}
+        />
 
         {pagination && !error && (
           <EmployeePagination
@@ -464,7 +291,7 @@ export function EmployeeTable() {
         employee={selectedEmployee}
         open={formOpen}
         onOpenChange={setFormOpen}
-        onSuccess={() => fetchEmployees(filters, page)}
+        onSuccess={() => fetchEmployees(appliedFilters, page)}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -492,6 +319,233 @@ export function EmployeeTable() {
     </>
   );
 }
+
+function EmployeeFiltersPanel({
+  loading,
+  onApply,
+  onClear,
+}: {
+  loading: boolean;
+  onApply: (filters: EmployeeFilters) => void;
+  onClear: () => void;
+}) {
+  const [searchDraft, setSearchDraft] = useState("");
+  const [filters, setFilters] = useState<EmployeeFilters>(emptyFilters);
+
+  const updateFilter = <K extends keyof EmployeeFilters>(
+    key: K,
+    value: EmployeeFilters[K],
+  ) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleApply = () => {
+    onApply({ ...filters, search: searchDraft });
+  };
+
+  const handleClear = () => {
+    setSearchDraft("");
+    setFilters(emptyFilters);
+    onClear();
+  };
+
+  return (
+    <div className="space-y-3 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
+          <Input
+            placeholder="Search by name or email..."
+            className={`pl-9 w-full ${filterInputClass}`}
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleApply()}
+          />
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="secondary" onClick={handleApply} disabled={loading}>
+            Apply
+          </Button>
+          <Button
+            className="bg-orange-200"
+            onClick={handleClear}
+            disabled={loading}
+          >
+            Clear
+          </Button>
+        </div>
+      </div>
+
+      <label className="text-zinc-800">Fitlers </label>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <FilterSelect
+          value={filters.country}
+          onChange={(value) => updateFilter("country", value)}
+          placeholder="All countries"
+          options={COUNTRIES}
+        />
+        <FilterSelect
+          value={filters.jobTitle}
+          onChange={(value) => updateFilter("jobTitle", value)}
+          placeholder="All job titles"
+          options={JOB_TITLES}
+        />
+        <FilterSelect
+          value={filters.department}
+          onChange={(value) => updateFilter("department", value)}
+          placeholder="All departments"
+          options={DEPARTMENTS}
+        />
+        <FilterSelect
+          value={filters.employmentType}
+          onChange={(value) => updateFilter("employmentType", value)}
+          placeholder="All types"
+          options={EMPLOYMENT_TYPES}
+          getLabel={(value) =>
+            EMPLOYMENT_TYPE_LABELS[
+              value as keyof typeof EMPLOYMENT_TYPE_LABELS
+            ] ?? value
+          }
+        />
+        <FilterSelect
+          value={filters.status}
+          onChange={(value) => updateFilter("status", value)}
+          placeholder="All status"
+          options={EMPLOYEE_STATUS}
+          getLabel={(value) =>
+            value.charAt(0).toUpperCase() + value.slice(1)
+          }
+        />
+        <Select
+          value={getSortOptionValue(filters.sortBy, filters.sortOrder)}
+          onValueChange={(next) => {
+            const option = SORT_OPTIONS.find((item) => item.value === next);
+            if (!option) return;
+            updateFilter("sortBy", option.sortBy);
+            updateFilter("sortOrder", option.sortOrder);
+          }}
+        >
+          <SelectTrigger size="sm" className={filterTriggerClass}>
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.value}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
+
+const EmployeeDataTable = memo(function EmployeeDataTable({
+  employees,
+  loading,
+  onEdit,
+  onDelete,
+}: {
+  employees: Employee[];
+  loading: boolean;
+  onEdit: (employee: Employee) => void;
+  onDelete: (employee: Employee) => void;
+}) {
+  return (
+    <div className="rounded-md border border-neutral-200">
+      <Table>
+        <TableHeader className="bg-black">
+          <TableRow className="hover:bg-black">
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Job Title</TableHead>
+            <TableHead>Country</TableHead>
+            <TableHead>Department</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Joining Date</TableHead>
+            <TableHead>Salary</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {loading ? (
+            <TableRow>
+              <TableCell
+                colSpan={10}
+                className="text-center text-neutral-500 py-8"
+              >
+                Loading employees...
+              </TableCell>
+            </TableRow>
+          ) : employees.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={10}
+                className="text-center text-neutral-500 py-8"
+              >
+                No employees found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            employees.map((employee) => (
+              <TableRow key={employee.id}>
+                <TableCell className="font-medium text-neutral-900">
+                  {employee.fullName}
+                </TableCell>
+                <TableCell className="text-neutral-600">
+                  {employee.email}
+                </TableCell>
+                <TableCell className="text-neutral-600">
+                  {employee.jobTitle}
+                </TableCell>
+                <TableCell className="text-neutral-600">
+                  {employee.country}
+                </TableCell>
+                <TableCell className="text-neutral-600">
+                  {employee.department}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{employee.employmentType}</Badge>
+                </TableCell>
+                <TableCell className="text-neutral-600 capitalize">
+                  {employee.status}
+                </TableCell>
+                <TableCell className="text-neutral-600">
+                  {formatDate(employee.joiningDate)}
+                </TableCell>
+                <TableCell className="text-neutral-600">
+                  {employee.salary.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onEdit(employee)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => onDelete(employee)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+});
 
 function FilterSelect<T extends string>({
   value,
