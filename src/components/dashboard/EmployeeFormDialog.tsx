@@ -161,16 +161,16 @@ export function EmployeeFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="grid gap-4">
+        <form onSubmit={handleSubmit} className="grid gap-3">
           <div className="grid grid-cols-2 gap-3">
-            <Field label="First name" error={errors.firstName}>
+            <Field label="First name *" error={errors.firstName}>
               <Input
                 value={form.firstName}
                 onChange={(e) => updateField("firstName", e.target.value)}
                 aria-invalid={!!errors.firstName}
               />
             </Field>
-            <Field label="Last name" error={errors.lastName}>
+            <Field label="Last name *" error={errors.lastName}>
               <Input
                 value={form.lastName}
                 onChange={(e) => updateField("lastName", e.target.value)}
@@ -179,43 +179,44 @@ export function EmployeeFormDialog({
             </Field>
           </div>
 
-          <Field label="Email" error={errors.email}>
-            <Input
-              type="email"
-              value={form.email}
-              onChange={(e) => updateField("email", e.target.value)}
-              aria-invalid={!!errors.email}
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Email *" error={errors.email}>
+              <Input
+                type="email"
+                value={form.email}
+                onChange={(e) => updateField("email", e.target.value)}
+                aria-invalid={!!errors.email}
+              />
+            </Field>
 
-          <Field label="Job title" error={errors.jobTitle}>
-            <Select
-              value={form.jobTitle || undefined}
-              onValueChange={(value) =>
-                updateField(
-                  "jobTitle",
-                  (value ?? "") as EmployeeFormValues["jobTitle"],
-                )
-              }
-            >
-              <SelectTrigger
-                className="w-full"
-                aria-invalid={!!errors.jobTitle}
+            <Field label="Job title *" error={errors.jobTitle}>
+              <Select
+                value={form.jobTitle || undefined}
+                onValueChange={(value) =>
+                  updateField(
+                    "jobTitle",
+                    (value ?? "") as EmployeeFormValues["jobTitle"],
+                  )
+                }
               >
-                <SelectValue placeholder="Select job title" />
-              </SelectTrigger>
-              <SelectContent>
-                {JOB_TITLES.map((title) => (
-                  <SelectItem key={title} value={title}>
-                    {title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
+                <SelectTrigger
+                  className="w-full"
+                  aria-invalid={!!errors.jobTitle}
+                >
+                  <SelectValue placeholder="Select job title" />
+                </SelectTrigger>
+                <SelectContent>
+                  {JOB_TITLES.map((title) => (
+                    <SelectItem key={title} value={title}>
+                      {title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Department" error={errors.department}>
+            <Field label="Department *" error={errors.department}>
               <Select
                 value={form.department || undefined}
                 onValueChange={(value) =>
@@ -241,7 +242,7 @@ export function EmployeeFormDialog({
               </Select>
             </Field>
 
-            <Field label="Employment type" error={errors.employmentType}>
+            <Field label="Employment type *" error={errors.employmentType}>
               <Select
                 value={form.employmentType}
                 onValueChange={(value) =>
@@ -270,7 +271,7 @@ export function EmployeeFormDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Country" error={errors.country}>
+            <Field label="Country *" error={errors.country}>
               <Select
                 value={form.country || undefined}
                 onValueChange={(value) =>
@@ -296,7 +297,7 @@ export function EmployeeFormDialog({
               </Select>
             </Field>
 
-            <Field label="Salary" error={errors.salary}>
+            <Field label="Salary *" error={errors.salary}>
               <Input
                 type="number"
                 min={0}
@@ -308,7 +309,7 @@ export function EmployeeFormDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Joining date" error={errors.joiningDate}>
+            <Field label="Joining date *" error={errors.joiningDate}>
               <Input
                 type="date"
                 value={form.joiningDate}
@@ -318,7 +319,7 @@ export function EmployeeFormDialog({
             </Field>
 
             {mode === "edit" && (
-              <Field label="Status" error={errors.status}>
+              <Field label="Status *" error={errors.status}>
                 <Select
                   value={form.status ?? "active"}
                   onValueChange={(value) =>
