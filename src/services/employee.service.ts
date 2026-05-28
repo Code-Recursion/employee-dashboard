@@ -1,4 +1,5 @@
 import { Employee, CreateEmployeePayload, UpdateEmployeePayload } from '../models/employee.types';
+import { supabaseServer } from "@/lib/supabase/server";
 
 /**
  * Service for Employee CRUD operations.
@@ -7,28 +8,74 @@ import { Employee, CreateEmployeePayload, UpdateEmployeePayload } from '../model
 export const EmployeeService = {
   
   async getEmployees(): Promise<Employee[]> {
-    // TODO: Implement fetching all employees from DB
-    return [];
+    const { data, error } = await supabaseServer
+      .from("employees")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch employees: ${error.message}`);
+    }
+
+    return (data ?? []) as Employee[];
   },
 
   async getEmployeeById(id: string): Promise<Employee | null> {
-    // TODO: Implement fetching a single employee by ID
-    return null;
+    const { data, error } = await supabaseServer
+      .from("employees")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to fetch employee: ${error.message}`);
+    }
+
+    return data as Employee | null;
   },
 
   async createEmployee(payload: CreateEmployeePayload): Promise<Employee> {
-    // TODO: Implement inserting a new employee into DB
-    throw new Error('Not implemented');
+    const { data, error } = await supabaseServer
+      .from("employees")
+      .insert(payload)
+      .select("*")
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create employee: ${error.message}`);
+    }
+
+    return data as Employee;
   },
 
   async updateEmployee(id: string, payload: UpdateEmployeePayload): Promise<Employee> {
-    // TODO: Implement updating an existing employee in DB
-    throw new Error('Not implemented');
+    const { data, error } = await supabaseServer
+      .from("employees")
+      .update(payload)
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to update employee: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error("Employee not found");
+    }
+
+    return data as Employee;
   },
 
   async deleteEmployee(id: string): Promise<void> {
-    // TODO: Implement deleting (or soft-deleting) an employee from DB
-    throw new Error('Not implemented');
+    const { error } = await supabaseServer
+      .from("employees")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      throw new Error(`Failed to delete employee: ${error.message}`);
+    }
   }
 
 };
