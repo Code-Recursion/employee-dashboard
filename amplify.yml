@@ -1,0 +1,23 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+
+    build:
+      commands:
+        - echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env.production
+        - echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" >> .env.production
+        - echo "DATABASE_URL=$DATABASE_URL" >> .env.production
+        - npm run build
+
+  artifacts:
+    baseDirectory: .next
+    files:
+      - "**/*"
+
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
