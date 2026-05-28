@@ -49,6 +49,28 @@ export interface CreateEmployeePayload {
 
 export type UpdateEmployeePayload = Partial<CreateEmployeePayload>;
 
+export interface EmployeeListQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  country?: string;
+  jobTitle?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedEmployeesResponse {
+  data: Employee[];
+  pagination: PaginationMeta;
+}
+
 // Metrics Types
 export interface CountrySalaryMetrics {
   country: string;

@@ -1,11 +1,29 @@
 import { NextResponse } from "next/server";
 import { EmployeeService } from "@/services/employee.service";
-import type { CreateEmployeePayload } from "@/models/employee.types";
+import type { CreateEmployeePayload, EmployeeListQuery } from "@/models/employee.types";
 
-export async function GET() {
+const parseListQuery = (searchParams: URLSearchParams): EmployeeListQuery => {
+  const page = Number(searchParams.get("page"));
+  const limit = Number(searchParams.get("limit"));
+  const sortOrder = searchParams.get("sortOrder");
+
+  return {
+    page: Number.isFinite(page) && page > 0 ? page : undefined,
+    limit: Number.isFinite(limit) && limit > 0 ? limit : undefined,
+    search: searchParams.get("search") ?? undefined,
+    country: searchParams.get("country") ?? undefined,
+    jobTitle: searchParams.get("jobTitle") ?? undefined,
+    sortBy: searchParams.get("sortBy") ?? undefined,
+    sortOrder: sortOrder === "asc" || sortOrder === "desc" ? sortOrder : undefined,
+  };
+};
+
+export async function GET(request: Request) {
   try {
-    const employees = await EmployeeService.getEmployees();
-    return NextResponse.json({ data: employees }, { status: 200 });
+    const { searchParams } = new URL(request.url);
+    const result = await EmployeeService.getEmployees(parseListQuery(searchParams));
+
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to list employees." },

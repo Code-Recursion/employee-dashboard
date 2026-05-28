@@ -1,6 +1,30 @@
-import { Employee, CreateEmployeePayload, UpdateEmployeePayload, EmploymentType } from '../models/employee.types';
+import {
+  Employee,
+  CreateEmployeePayload,
+  UpdateEmployeePayload,
+  EmploymentType,
+  EmployeeListQuery,
+  PaginatedEmployeesResponse,
+} from '../models/employee.types';
 import { EmployeeStatus } from '../constants';
 import { prisma } from "@/lib/prisma";
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+
+const SORTABLE_FIELDS = {
+  salary: "salary",
+  joiningDate: "joiningDate",
+  fullName: "fullName",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
+  country: "country",
+  jobTitle: "jobTitle",
+  department: "department",
+} as const;
+
+type SortableField = keyof typeof SORTABLE_FIELDS;
 
 const buildFullName = (firstName: string, lastName: string): string =>
   `${firstName.trim()} ${lastName.trim()}`.trim();
@@ -38,11 +62,50 @@ const toEmployee = (record: {
 });
 
 export const EmployeeService = {
-  async getEmployees(): Promise<Employee[]> {
-    const employees = await prisma.employee.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    return employees.map(toEmployee);
+  async getEmployees(query: EmployeeListQuery = {}): Promise<PaginatedEmployeesResponse> {
+    const page = Math.max(1, query.page ?? DEFAULT_PAGE);
+    const limit = Math.min(MAX_LIMIT, Math.max(1, query.limit ?? DEFAULT_LIMIT));
+    const skip = (page - 1) * limit;
+
+    const where = {
+      ...(query.country ? { country: query.country } : {}),
+      ...(query.jobTitle ? { jobTitle: query.jobTitle } : {}),
+      ...(query.search
+        ? {
+            fullName: {
+              contains: query.search.trim(),
+              mode: "insensitive",
+            },
+          }
+        : {}),
+    };
+
+    const sortField =
+      query.sortBy && query.sortBy in SORTABLE_FIELDS
+        ? SORTABLE_FIELDS[query.sortBy as SortableField]
+        : "createdAt";
+
+    const sortOrder = query.sortOrder === "asc" ? "asc" : "desc";
+
+    const [employees, total] = await Promise.all([
+      prisma.employee.findMany({
+        where,
+        orderBy: { [sortField]: sortOrder },
+        skip,
+        take: limit,
+      }),
+      prisma.employee.count({ where }),
+    ]);
+
+    return {
+      data: employees.map(toEmployee),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 0,
+      },
+    };
   },
 
   async getEmployeeById(id: string): Promise<Employee | null> {
