@@ -14,6 +14,12 @@ pnpm dev
 bun dev
 ```
 
+## Script to run test 
+```
+  "test": "vitest run",
+  "test:watch": "vitest",
+```
+
 ### db seed script
 
 `node src/lib/seed/script.ts`
