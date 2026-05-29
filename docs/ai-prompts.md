@@ -1,8 +1,4 @@
-# folder structure
-
 init latest next app with tailwind and ts, don't create new root dir use existing root folder
-
-# folder structure
 
 for this next app, suggest me a minimal but scalable folder structure for a small full stack app, I require services, constant, utils, asset, postgres / supabase sql schema, model. I will use shadcn component for ui.
 
@@ -43,6 +39,7 @@ create a reusable navbar component with a link to navigate
 create sample pages :
 /dashboard
 /insignts
+
 use simple design.
 
 ---
@@ -54,3 +51,55 @@ write types use the this sample employee for the BE - { "id": 1, "full_name": "W
 on FE create parser for be response parsing and create another type for emplyee entity in types directory
 
 use form @src/components/ui/dialog.tsx createa reusable compoent for dialog to edit and create employee entries, also do zod validation on employee form.
+
+Initiate ShadCN UI and add commonly used components such as:
+
+- Dialog / Modal
+- Button
+- Input
+- Badge
+- Filter controls
+- Table / List
+- Toast notifications
+
+discuss the trade-offs between these
+
+- Calculating salary insights in real time from employee data
+- Maintaining a separate aggregated insights layer with caching
+
+Consider separation of concerns, scalability, and maintainability.
+
+Requirements:
+
+- Add, update, delete, and view employees
+- Employee fields should include full name, job title, country, and salary
+- Salary insights should include:
+  - Min, max, and average salary by country
+  - Average salary by job title within a country
+
+Create a reusable navigation bar component with links for navigation.
+
+Create sample pages:
+
+- /dashboard
+- /insights
+
+Keep the initial UI simple.
+
+Consider reusability and extensibility using SOLID principles.
+
+Create reusable components:
+
+- Search bar
+- Confirmation dialog
+
+Use the following employee payload as the backend contract:
+reference @employee.type.ts for contract
+
+Create TypeScript types for the backend response.
+
+Create a frontend Employee entity type and a parser/mapper to transform API responses into frontend models.
+
+Using src/components/ui/dialog.tsx, create a reusable dialog component for creating and editing employees.
+
+Add Zod validation for employee forms.
