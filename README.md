@@ -18,6 +18,24 @@ bun dev
 
 `node src/lib/seed/script.ts`
 
+## Tech Stack
+
+### Frontend
+- Next.js 16 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS
+- ShadCN UI
+
+### Backend
+- Next.js API Routes
+- Prisma ORM
+- PostgreSQL (Supabase)
+
+### Testing
+- Vitest
+- React Testing Library
+
 LLD - HLD
 ![System Architecture (HLD & LLD)](docs/lld-hld-trade-offs.png)
 
