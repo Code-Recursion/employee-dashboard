@@ -12,7 +12,7 @@ const parseDate = (value: string): Date => {
 
 export const parseEmployee = (record: EmployeeApiRecord): EmployeeListItem => ({
   id: record.id,
-  fullName: record.full_name,
+  fullName: record.fullName,
   email: record.email,
   gender: record.gender,
   createdAt: parseDate(record.createdAt),
